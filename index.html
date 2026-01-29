@@ -5,11 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pet Eggs Simulator</title>
 
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
 <style>
 body{
  background:#0b0b0b;
@@ -18,11 +13,23 @@ body{
  text-align:center;
  margin:0;
 }
-button{padding:10px;margin:5px;font-size:14px}
-.box{border:1px solid #444;padding:10px;margin:8px}
-.pet{animation:pop .3s}
-@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
-
+button{
+ padding:10px;
+ margin:5px;
+ font-size:14px;
+}
+.box{
+ border:1px solid #444;
+ padding:10px;
+ margin:8px;
+}
+.pet{
+ animation:pop .3s;
+}
+@keyframes pop{
+ from{transform:scale(.5);opacity:0}
+ to{transform:scale(1);opacity:1}
+}
 .common{color:#aaa}
 .rare{color:#4af}
 .epic{color:#c4f}
@@ -35,8 +42,10 @@ button{padding:10px;margin:5px;font-size:14px}
  text-shadow:0 0 12px #fff;
  animation:cosmic 2s linear infinite;
 }
-@keyframes cosmic{0%{filter:hue-rotate(0)}100%{filter:hue-rotate(360deg)}}
-
+@keyframes cosmic{
+ 0%{filter:hue-rotate(0)}
+ 100%{filter:hue-rotate(360deg)}
+}
 .panel{display:none}
 </style>
 </head>
@@ -44,13 +53,14 @@ button{padding:10px;margin:5px;font-size:14px}
 <body>
 
 <h2>🥚 Pet Eggs Simulator</h2>
-<div id="money"></div>
-<div id="luck"></div>
+<div id="money">💰 500</div>
+<div id="luck">🍀 Удача: 0</div>
 
 <button onclick="upgradeLuck()">🍀 Удача (500)</button>
 <button onclick="toggle('inventory')">🎒 Инвентарь</button>
 <button onclick="toggle('shop')">🛒 Бустеры</button>
 
+<h3>🥚 Яйца</h3>
 <div id="eggs"></div>
 
 <div id="inventory" class="panel"></div>
@@ -58,10 +68,6 @@ button{padding:10px;margin:5px;font-size:14px}
 
 <h3>🐾 Последние питомцы</h3>
 <div id="pets"></div>
-
-<audio id="normal" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_0c61a6a99a.mp3"></audio>
-<audio id="rareSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_6cbe8c40a2.mp3"></audio>
-<audio id="cosmicSound" src="https://cdn.pixabay.com/download/audio/2023/03/28/audio_42e1c8b0e5.mp3"></audio>
 
 <script>
 let data = JSON.parse(localStorage.getItem("save")) || {
@@ -82,14 +88,20 @@ const rarities=[
  {name:"COSMIC",cls:"cosmic",m:150}
 ];
 
-const eggs=[
- {c:100,b:1},{c:1000,b:5},{c:10000,b:20},
- {c:100000,b:80},{c:1000000,b:300},{c:10000000,b:1500}
+const eggsData=[
+ {c:100,b:1},
+ {c:1000,b:5},
+ {c:10000,b:20},
+ {c:100000,b:80},
+ {c:1000000,b:300},
+ {c:10000000,b:1500}
 ];
 
-function save(){localStorage.setItem("save",JSON.stringify(data))}
+function save(){
+ localStorage.setItem("save",JSON.stringify(data));
+}
 
-function roll(){
+function rollRarity(){
  let r=Math.random()*100;
  let l=data.luck+(Date.now()<data.luckBoostEnd?10:0);
  if(r+l>99.95)return 5;
@@ -101,45 +113,42 @@ function roll(){
 }
 
 function openEgg(i){
- if(data.money<eggs[i].c)return;
- data.money-=eggs[i].c;
- let r=roll();
- let inc=eggs[i].b*rarities[r].m;
+ if(data.money<eggsData[i].c)return;
+ data.money-=eggsData[i].c;
+ let r=rollRarity();
+ let inc=eggsData[i].b*rarities[r].m;
  data.pets.push({r,inc});
- playSound(r);
- save();update();
-}
-
-function playSound(r){
- if(r==5)cosmicSound.play();
- else if(r>=3)rareSound.play();
- else normal.play();
+ save();
+ update();
 }
 
 function upgradeLuck(){
  if(data.money<500)return;
  data.money-=500;
  data.luck++;
- save();update();
+ save();
+ update();
 }
 
 function toggle(id){
  let el=document.getElementById(id);
- el.style.display=el.style.display=="none"?"block":"none";
- if(id=="inventory")renderInv();
- if(id=="shop")renderShop();
+ el.style.display=el.style.display==="none"?"block":"none";
+ if(id==="inventory")renderInventory();
+ if(id==="shop")renderShop();
 }
 
-function renderInv(){
- let c={};
- data.pets.forEach(p=>c[p.r]=(c[p.r]||0)+1);
- let t="📦 Всего: "+data.pets.length+"<br>";
- for(let i in c)t+=rarities[i].name+": "+c[i]+"<br>";
- inventory.innerHTML=t;
+function renderInventory(){
+ let counts={};
+ data.pets.forEach(p=>counts[p.r]=(counts[p.r]||0)+1);
+ let t="📦 Всего питомцев: "+data.pets.length+"<br>";
+ for(let i in counts){
+  t+=rarities[i].name+": "+counts[i]+"<br>";
+ }
+ document.getElementById("inventory").innerHTML=t;
 }
 
 function renderShop(){
- shop.innerHTML=`
+ document.getElementById("shop").innerHTML=`
  ⚡ <button onclick="buyBoost(2,30000,2000)">x2 доход (30с)</button><br>
  ⚡ <button onclick="buyBoost(5,15000,5000)">x5 доход (15с)</button><br>
  🍀 <button onclick="buyLuck()">+10 удачи (20с)</button>
@@ -166,27 +175,34 @@ setInterval(()=>{
  let inc=0;
  data.pets.forEach(p=>inc+=p.inc);
  data.money+=inc*mult;
- save();update();
+ save();
+ update();
 },3000);
 
 function update(){
- money.innerText="💰 "+Math.floor(data.money);
- luck.innerText="🍀 Удача: "+data.luck;
+ document.getElementById("money").innerText="💰 "+Math.floor(data.money);
+ document.getElementById("luck").innerText="🍀 Удача: "+data.luck;
 
- eggsDiv="";
- eggs.forEach((e,i)=>{
-  eggsDiv+=`<div class="box">🥚 ${e.c} <button onclick="openEgg(${i})">Открыть</button></div>`;
+ let eggsHTML="";
+ eggsData.forEach((e,i)=>{
+  eggsHTML+=`
+   <div class="box">
+    🥚 ${e.c}
+    <button onclick="openEgg(${i})">Открыть</button>
+   </div>`;
  });
- eggs.innerHTML=eggsDiv;
+ document.getElementById("eggs").innerHTML=eggsHTML;
 
- let p="";
- data.pets.slice(-10).forEach(x=>{
-  p+=`<div class="pet ${rarities[x.r].cls}">
-   ${rarities[x.r].name} +${x.inc}
-  </div>`;
+ let petsHTML="";
+ data.pets.slice(-10).forEach(p=>{
+  petsHTML+=`
+   <div class="pet ${rarities[p.r].cls}">
+    ${rarities[p.r].name} +${p.inc}
+   </div>`;
  });
- pets.innerHTML=p;
+ document.getElementById("pets").innerHTML=petsHTML;
 }
+
 update();
 </script>
 
