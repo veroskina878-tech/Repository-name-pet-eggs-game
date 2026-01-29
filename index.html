@@ -7,200 +7,280 @@
 
 <style>
 body{
- background:#0b0b0b;
- color:white;
- font-family:Arial;
- text-align:center;
  margin:0;
+ font-family:Arial,sans-serif;
+ background:radial-gradient(circle at top,#1a1f44,#0c1022);
+ color:#cfd3ff;
+ overflow:hidden;
 }
-button{
- padding:10px;
- margin:5px;
+
+/* TOP */
+#top{
+ position:absolute;top:0;left:0;right:0;
+ display:flex;justify-content:space-between;
+ padding:10px;z-index:10;
+}
+.topBtn{
+ background:linear-gradient(145deg,#5865ff,#7c86ff);
+ border:none;border-radius:16px;
+ padding:8px 14px;color:white;
  font-size:14px;
 }
-.box{
- border:1px solid #444;
- padding:10px;
- margin:8px;
+
+/* GAME */
+#game{
+ display:flex;height:100vh;
+ padding-top:50px;
 }
-.pet{
- animation:pop .3s;
+#left,#right{
+ width:25%;padding:12px;
+ background:linear-gradient(180deg,#141a33,#0b0f24);
 }
-@keyframes pop{
- from{transform:scale(.5);opacity:0}
- to{transform:scale(1);opacity:1}
+#center{
+ width:50%;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ flex-direction:column;
 }
-.common{color:#aaa}
-.rare{color:#4af}
-.epic{color:#c4f}
-.legendary{color:#fa4}
-.mythic{color:#f4f;text-shadow:0 0 8px #f0f}
-.cosmic{
- background:linear-gradient(90deg,#0ff,#f0f,#ff0);
- -webkit-background-clip:text;
- color:transparent;
- text-shadow:0 0 12px #fff;
- animation:cosmic 2s linear infinite;
+
+/* EGG */
+#egg{
+ width:150px;
+ animation:float 5s ease-in-out infinite;
 }
-@keyframes cosmic{
- 0%{filter:hue-rotate(0)}
- 100%{filter:hue-rotate(360deg)}
+@keyframes float{
+ 0%{transform:translateY(0)}
+ 50%{transform:translateY(-20px)}
+ 100%{transform:translateY(0)}
 }
-.panel{display:none}
+
+/* BOTTOM */
+#bottom{
+ position:absolute;bottom:0;left:25%;width:50%;
+ background:#000a;padding:10px;
+ text-align:center;
+ font-size:14px;
+}
+
+/* OVERLAYS */
+.overlay{
+ position:absolute;top:0;left:0;right:0;bottom:0;
+ background:#000d;
+ display:none;
+ z-index:20;
+ overflow-y:auto;
+}
+.panel{
+ background:#141a33;
+ margin:60px auto;
+ padding:20px;
+ width:85%;
+ max-width:420px;
+ border-radius:24px;
+}
+
+/* GALLERY */
+.galleryItem{
+ display:flex;
+ justify-content:center;
+ margin:20px 0;
+ perspective:800px;
+}
+.pet3d{
+ width:90px;height:90px;
+ border-radius:20px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-size:36px;
+ animation:spin 6s linear infinite;
+ transform-style:preserve-3d;
+}
+@keyframes spin{
+ from{transform:rotateY(0deg)}
+ to{transform:rotateY(360deg)}
+}
+.glow{
+ box-shadow:0 0 25px rgba(255,255,255,.6);
+}
+
+/* GRAPH */
+canvas{width:100%;height:120px}
+button{margin-top:8px}
+
+/* RARITY COLORS */
+.c0{background:#2a2f55}
+.c1{background:#2f4cff}
+.c2{background:#9b4cff}
+.c3{background:#ffb84c}
+.c4{background:#ff4cff}
+.c5{
+ background:linear-gradient(45deg,#0ff,#f0f,#ff0);
+ animation:rainbow 6s linear infinite;
+}
+@keyframes rainbow{
+ from{filter:hue-rotate(0)}
+ to{filter:hue-rotate(360deg)}
+}
 </style>
 </head>
 
 <body>
 
-<h2>🥚 Pet Eggs Simulator</h2>
-<div id="money">💰 500</div>
-<div id="luck">🍀 Удача: 0</div>
+<div id="top">
+ <button class="topBtn" onclick="openAnalytics()">📊 Аналитика</button>
+ <button class="topBtn" onclick="openGallery()">🖼 Галерея</button>
+</div>
 
-<button onclick="upgradeLuck()">🍀 Удача (500)</button>
-<button onclick="toggle('inventory')">🎒 Инвентарь</button>
-<button onclick="toggle('shop')">🛒 Бустеры</button>
+<div id="game">
+ <div id="left">
+  <h3>🥚 Яйца</h3>
+  <button onclick="openEgg(0)">🥚 Cheap</button><br>
+  <button onclick="openEgg(1)">🔵 Rare</button><br>
+  <button onclick="openEgg(2)">🟣 Epic</button><br>
+  <button onclick="openEgg(3)">🌈 Cosmic</button>
+ </div>
 
-<h3>🥚 Яйца</h3>
-<div id="eggs"></div>
+ <div id="center">
+  <img id="egg" src="https://cdn-icons-png.flaticon.com/512/616/616430.png">
+ </div>
 
-<div id="inventory" class="panel"></div>
-<div id="shop" class="panel"></div>
+ <div id="right">
+  <h3>🐾 Последний</h3>
+  <div id="lastPet">—</div>
+ </div>
+</div>
 
-<h3>🐾 Последние питомцы</h3>
-<div id="pets"></div>
+<div id="bottom">
+ <div id="money"></div>
+ <div id="perSec"></div>
+</div>
+
+<!-- ANALYTICS -->
+<div id="analytics" class="overlay">
+ <div class="panel">
+  <h3>📊 Аналитика</h3>
+  <canvas id="chart"></canvas>
+  <div id="stats"></div>
+  <button onclick="closeAnalytics()">Закрыть</button>
+ </div>
+</div>
+
+<!-- GALLERY -->
+<div id="gallery" class="overlay">
+ <div class="panel">
+  <h3>🖼 Галерея питомцев</h3>
+  <div id="galleryList"></div>
+  <button onclick="closeGallery()">Закрыть</button>
+ </div>
+</div>
 
 <script>
-let data = JSON.parse(localStorage.getItem("save")) || {
+let data = JSON.parse(localStorage.getItem("saveDeep")) || {
  money:500,
- luck:0,
  pets:[],
- boost:1,
- boostEnd:0,
- luckBoostEnd:0
+ discovered:{},
+ history:[]
 };
 
 const rarities=[
- {name:"Common",cls:"common",m:1},
- {name:"Rare",cls:"rare",m:2},
- {name:"Epic",cls:"epic",m:4},
- {name:"Legendary",cls:"legendary",m:8},
- {name:"MYTHIC",cls:"mythic",m:25},
- {name:"COSMIC",cls:"cosmic",m:150}
+ {name:"Common",mul:1},
+ {name:"Rare",mul:5},
+ {name:"Epic",mul:25},
+ {name:"Legendary",mul:150},
+ {name:"MYTHIC",mul:1000},
+ {name:"COSMIC",mul:10000}
 ];
 
-const eggsData=[
- {c:100,b:1},
- {c:1000,b:5},
- {c:10000,b:20},
- {c:100000,b:80},
- {c:1000000,b:300},
- {c:10000000,b:1500}
+const eggs=[
+ // разные кривые
+ [70,20,8,1.5,0.45,0.05],    // Cheap
+ [40,30,20,7,2.7,0.3],      // Rare
+ [20,25,30,15,8,2],         // Epic
+ [5,10,20,30,25,10]         // Cosmic
 ];
 
-function save(){
- localStorage.setItem("save",JSON.stringify(data));
-}
-
-function rollRarity(){
- let r=Math.random()*100;
- let l=data.luck+(Date.now()<data.luckBoostEnd?10:0);
- if(r+l>99.95)return 5;
- if(r+l>99.5)return 4;
- if(r+l>93)return 3;
- if(r+l>75)return 2;
- if(r+l>50)return 1;
+function roll(curve){
+ let r=Math.random()*100,sum=0;
+ for(let i=0;i<curve.length;i++){
+  sum+=curve[i];
+  if(r<=sum)return i;
+ }
  return 0;
 }
 
-function openEgg(i){
- if(data.money<eggsData[i].c)return;
- data.money-=eggsData[i].c;
- let r=rollRarity();
- let inc=eggsData[i].b*rarities[r].m;
+function fmt(n){
+ if(n>=1e6)return(n/1e6).toFixed(1)+" млн";
+ if(n>=1e3)return(n/1e3).toFixed(1)+" тыс.";
+ return Math.floor(n);
+}
+
+function openEgg(type){
+ let r=roll(eggs[type]);
+ let inc=0.05*rarities[r].mul;
  data.pets.push({r,inc});
- save();
- update();
-}
-
-function upgradeLuck(){
- if(data.money<500)return;
- data.money-=500;
- data.luck++;
- save();
- update();
-}
-
-function toggle(id){
- let el=document.getElementById(id);
- el.style.display=el.style.display==="none"?"block":"none";
- if(id==="inventory")renderInventory();
- if(id==="shop")renderShop();
-}
-
-function renderInventory(){
- let counts={};
- data.pets.forEach(p=>counts[p.r]=(counts[p.r]||0)+1);
- let t="📦 Всего питомцев: "+data.pets.length+"<br>";
- for(let i in counts){
-  t+=rarities[i].name+": "+counts[i]+"<br>";
- }
- document.getElementById("inventory").innerHTML=t;
-}
-
-function renderShop(){
- document.getElementById("shop").innerHTML=`
- ⚡ <button onclick="buyBoost(2,30000,2000)">x2 доход (30с)</button><br>
- ⚡ <button onclick="buyBoost(5,15000,5000)">x5 доход (15с)</button><br>
- 🍀 <button onclick="buyLuck()">+10 удачи (20с)</button>
- `;
-}
-
-function buyBoost(m,t,c){
- if(data.money<c)return;
- data.money-=c;
- data.boost=m;
- data.boostEnd=Date.now()+t;
- save();
-}
-
-function buyLuck(){
- if(data.money<3000)return;
- data.money-=3000;
- data.luckBoostEnd=Date.now()+20000;
- save();
+ data.discovered[r]=true;
+ lastPet.innerText=rarities[r].name+" (+"+fmt(inc)+"/с)";
+ update();save();
 }
 
 setInterval(()=>{
- let mult=(Date.now()<data.boostEnd)?data.boost:1;
- let inc=0;
- data.pets.forEach(p=>inc+=p.inc);
- data.money+=inc*mult;
- save();
+ let ps=0;
+ data.pets.forEach(p=>ps+=p.inc);
+ data.money+=ps;
+ data.history.push(data.money);
+ if(data.history.length>30)data.history.shift();
  update();
-},3000);
+},1000);
 
 function update(){
- document.getElementById("money").innerText="💰 "+Math.floor(data.money);
- document.getElementById("luck").innerText="🍀 Удача: "+data.luck;
+ let ps=0;data.pets.forEach(p=>ps+=p.inc);
+ money.innerText="💰 "+fmt(data.money);
+ perSec.innerText="⚡ "+fmt(ps)+" / сек";
+ drawChart();
+}
 
- let eggsHTML="";
- eggsData.forEach((e,i)=>{
-  eggsHTML+=`
-   <div class="box">
-    🥚 ${e.c}
-    <button onclick="openEgg(${i})">Открыть</button>
+function drawChart(){
+ let c=document.getElementById("chart");
+ let ctx=c.getContext("2d");
+ ctx.clearRect(0,0,300,120);
+ if(data.history.length<2)return;
+ let max=Math.max(...data.history);
+ ctx.strokeStyle="#7c86ff";
+ ctx.beginPath();
+ data.history.forEach((v,i)=>{
+  let x=i*(300/(data.history.length-1));
+  let y=120-(v/max)*100;
+  i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+ });
+ ctx.stroke();
+}
+
+function openAnalytics(){
+ analytics.style.display="block";
+ let total=data.pets.length;
+ stats.innerHTML="Питомцев: "+total;
+}
+function closeAnalytics(){analytics.style.display="none"}
+
+function openGallery(){
+ gallery.style.display="block";
+ let html="";
+ Object.keys(data.discovered).forEach(r=>{
+  html+=`
+   <div class="galleryItem">
+    <div class="pet3d c${r} ${r>=3?"glow":""}">
+     🐾
+    </div>
    </div>`;
  });
- document.getElementById("eggs").innerHTML=eggsHTML;
+ galleryList.innerHTML=html;
+}
+function closeGallery(){gallery.style.display="none"}
 
- let petsHTML="";
- data.pets.slice(-10).forEach(p=>{
-  petsHTML+=`
-   <div class="pet ${rarities[p.r].cls}">
-    ${rarities[p.r].name} +${p.inc}
-   </div>`;
- });
- document.getElementById("pets").innerHTML=petsHTML;
+function save(){
+ localStorage.setItem("saveDeep",JSON.stringify(data));
 }
 
 update();
